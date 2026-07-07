@@ -1,0 +1,18 @@
+# Build artifacts
+/bin/
+/dist/
+*.test
+coverage.out
+
+# Development notes (not part of the public repo)
+NOTES.md
+/scratch/
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Claude Code local settings
+.claude/
