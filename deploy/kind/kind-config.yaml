@@ -1,0 +1,21 @@
+# kind cluster for minato.
+# hack/cluster-up.sh rewrites hostPort when MINATO_HTTP_PORT is set (default 80).
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: minato
+containerdConfigPatches:
+  # Resolve registry hosts (kind-registry:5000 etc.) via /etc/containerd/certs.d,
+  # which cluster-up.sh populates on each node. See docs/adr and the kind
+  # local-registry guide: https://kind.sigs.k8s.io/docs/user/local-registry/
+  - |-
+    [plugins."io.containerd.grpc.v1.cri".registry]
+      config_path = "/etc/containerd/certs.d"
+nodes:
+  - role: control-plane
+    labels:
+      ingress-ready: "true"
+    extraPortMappings:
+      - containerPort: 80
+        hostPort: 80
+        listenAddress: 127.0.0.1
+        protocol: TCP
