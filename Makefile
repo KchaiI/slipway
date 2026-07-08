@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 
-.PHONY: build install-cli deploy-server cluster-up cluster-down cluster-purge test-m0 test-m1 e2e
+.PHONY: build install-cli deploy-server test cluster-up cluster-down cluster-purge test-m0 test-m1 test-m2 test-m3 e2e
 
 ## Build ----------------------------------------------------------------------
 
@@ -13,6 +13,9 @@ install-cli: ## Install the minato CLI into GOPATH/bin
 
 deploy-server: ## Build the server image and roll it out to the cluster
 	hack/deploy-server.sh
+
+test: ## Run unit tests
+	go test ./internal/... ./cmd/...
 
 ## Local environment ---------------------------------------------------------
 
