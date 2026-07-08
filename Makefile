@@ -38,3 +38,6 @@ test-m2: ## M2: git push -> build -> deploy pipeline
 
 test-m3: ## M3: scale / logs -f / rollback
 	hack/test-m3.sh
+
+e2e: ## Full Definition-of-Done verification on kind (bootstraps if needed)
+	hack/e2e.sh
