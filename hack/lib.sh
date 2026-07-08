@@ -4,7 +4,10 @@ CLUSTER_NAME=minato
 REGISTRY_NAME=kind-registry
 REGISTRY_HOST_PORT=5001
 MIRROR_NAME=kind-registry-mirror
+MIRROR_HOST_PORT=5002
 REGISTRY_IMAGE=registry:2
+KANIKO_IMAGE=gcr.io/kaniko-project/executor:v1.23.2
+BUSYBOX_IMAGE=busybox:1.37
 
 info() { printf '\033[1;34m==>\033[0m %s\n' "$*"; }
 fail() { printf '\033[1;31mFAIL:\033[0m %s\n' "$*" >&2; exit 1; }

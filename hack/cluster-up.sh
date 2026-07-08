@@ -23,10 +23,15 @@ if ! container_running "${REGISTRY_NAME}"; then
     --name "${REGISTRY_NAME}" "${REGISTRY_IMAGE}" >/dev/null
 fi
 
+# Recreate the mirror if it exists without its host port (older setups).
+if container_running "${MIRROR_NAME}" \
+    && ! docker port "${MIRROR_NAME}" 2>/dev/null | grep -q "${MIRROR_HOST_PORT}"; then
+  docker rm -f "${MIRROR_NAME}" >/dev/null
+fi
 if ! container_running "${MIRROR_NAME}"; then
-  info "starting docker.io pull-through mirror ${MIRROR_NAME}"
+  info "starting docker.io pull-through mirror ${MIRROR_NAME} (localhost:${MIRROR_HOST_PORT})"
   docker rm -f "${MIRROR_NAME}" >/dev/null 2>&1 || true
-  docker run -d --restart=always \
+  docker run -d --restart=always -p "127.0.0.1:${MIRROR_HOST_PORT}:5000" \
     -e REGISTRY_PROXY_REMOTEURL=https://registry-1.docker.io \
     --name "${MIRROR_NAME}" "${REGISTRY_IMAGE}" >/dev/null
 fi
@@ -47,6 +52,11 @@ for node in $(kind get nodes --name "${CLUSTER_NAME}"); do
     printf '[host."http://%s:5000"]\n' "${REGISTRY_NAME}" \
       | docker exec -i "${node}" tee "/etc/containerd/certs.d/${reg}/hosts.toml" >/dev/null
   done
+  # Route docker.io pulls made by the nodes through the local mirror.
+  docker exec "${node}" mkdir -p "/etc/containerd/certs.d/docker.io"
+  printf 'server = "https://registry-1.docker.io"\n\n[host."http://%s:5000"]\n  capabilities = ["pull", "resolve"]\n' \
+    "${MIRROR_NAME}" \
+    | docker exec -i "${node}" tee "/etc/containerd/certs.d/docker.io/hosts.toml" >/dev/null
 done
 
 # --- 5. Attach registries to the kind docker network ---------------------------
@@ -82,5 +92,10 @@ for i in $(seq 1 60); do
 done
 kubectl -n ingress-nginx wait --for=condition=ready pod \
   -l app.kubernetes.io/component=controller --timeout=180s >/dev/null
+
+# --- 8. Warm build infrastructure (best effort) ---------------------------------
+if [ "${MINATO_SKIP_WARM:-}" != "1" ]; then
+  hack/warm-images.sh || info "image warm-up failed (continuing; first build will be slower)"
+fi
 
 info "cluster is up. ingress: http://<app>.localtest.me$(ingress_port_suffix)"

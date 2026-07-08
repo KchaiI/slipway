@@ -49,7 +49,10 @@ func (s *Server) createApp(ctx context.Context, app string) error {
 	if err := s.deployer.EnsureNamespace(ctx, app); err != nil {
 		return err
 	}
-	return s.releases.Init(ctx, deploy.Namespace(app))
+	if err := s.releases.Init(ctx, deploy.Namespace(app)); err != nil {
+		return err
+	}
+	return s.initRepo(app)
 }
 
 func (s *Server) handleListApps(w http.ResponseWriter, r *http.Request) {
@@ -108,6 +111,10 @@ func (s *Server) handleDestroyApp(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := s.deployer.DeleteNamespace(r.Context(), app); err != nil {
 		writeError(w, http.StatusInternalServerError, "%v", err)
+		return
+	}
+	if err := s.deleteRepo(app); err != nil {
+		writeError(w, http.StatusInternalServerError, "delete repository: %v", err)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)

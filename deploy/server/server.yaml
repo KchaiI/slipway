@@ -79,10 +79,13 @@ metadata:
   name: minato-server
   namespace: minato-system
   annotations:
-    # git pushes stream request bodies of arbitrary size
+    # git pushes stream request bodies of arbitrary size, and build progress
+    # must reach the pusher line by line — disable all proxy buffering.
     nginx.ingress.kubernetes.io/proxy-body-size: "0"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
 spec:
   ingressClassName: nginx
   rules:

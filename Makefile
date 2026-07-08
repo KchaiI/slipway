@@ -32,3 +32,6 @@ test-m0: ## M0: cluster / registry / ingress smoke test
 
 test-m1: ## M1: control plane + CLI + image deploy
 	hack/test-m1.sh
+
+test-m2: ## M2: git push -> build -> deploy pipeline
+	hack/test-m2.sh

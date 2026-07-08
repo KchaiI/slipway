@@ -8,6 +8,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/KchaiI/slipway/internal/build"
 	"github.com/KchaiI/slipway/internal/kube"
 	"github.com/KchaiI/slipway/internal/server"
 )
@@ -18,6 +19,14 @@ func main() {
 		IngressPort: envIntOr("MINATO_INGRESS_PORT", 80),
 		ServerHost:  envOr("MINATO_SERVER_HOST", "minato"),
 		DataDir:     envOr("MINATO_DATA_DIR", "/data"),
+		Build: build.Config{
+			Registry:       envOr("MINATO_REGISTRY", "kind-registry:5000"),
+			RegistryMirror: envOr("MINATO_REGISTRY_MIRROR", "kind-registry-mirror:5000"),
+			ContextBaseURL: envOr("MINATO_CONTEXT_BASE_URL",
+				"http://minato-server.minato-system.svc/internal/contexts"),
+			KanikoImage:  envOr("MINATO_KANIKO_IMAGE", "gcr.io/kaniko-project/executor:v1.23.2"),
+			BusyboxImage: envOr("MINATO_BUSYBOX_IMAGE", "busybox:1.37"),
+		},
 	}
 	listen := envOr("MINATO_LISTEN", ":8080")
 

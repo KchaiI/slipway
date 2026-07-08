@@ -12,6 +12,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 
 	"github.com/KchaiI/slipway/internal/api"
+	"github.com/KchaiI/slipway/internal/build"
 	"github.com/KchaiI/slipway/internal/deploy"
 	"github.com/KchaiI/slipway/internal/release"
 )
@@ -22,6 +23,8 @@ type Config struct {
 	IngressPort int    // host port that reaches ingress (URL rendering)
 	ServerHost  string // hostname of minato-server itself (git remote URLs)
 	DataDir     string // persistent dir for git repos and build contexts
+
+	Build build.Config
 }
 
 // Server wires the HTTP handlers to the Kubernetes-facing components.
@@ -30,16 +33,19 @@ type Server struct {
 	client   kubernetes.Interface
 	deployer *deploy.Deployer
 	releases *release.Store
+	builder  *build.Builder
 
 	locks sync.Map // app name -> *sync.Mutex, serializes deploys per app
 }
 
 func New(cfg Config, client kubernetes.Interface) *Server {
+	cfg.Build.DataDir = cfg.DataDir
 	return &Server{
 		cfg:      cfg,
 		client:   client,
 		deployer: deploy.NewDeployer(client, cfg.Domain, cfg.IngressPort),
 		releases: release.NewStore(client),
+		builder:  build.NewBuilder(client, cfg.Build),
 	}
 }
 
@@ -56,6 +62,14 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("DELETE /v1/apps/{app}", s.handleDestroyApp)
 	mux.HandleFunc("POST /v1/apps/{app}/deployments", s.handleDeployImage)
 	mux.HandleFunc("GET /v1/apps/{app}/releases", s.handleReleases)
+
+	// Git smart HTTP (push only)
+	mux.HandleFunc("GET /git/{repo}/info/refs", s.handleInfoRefs)
+	mux.HandleFunc("POST /git/{repo}/git-receive-pack", s.handleReceivePack)
+
+	// Cluster-internal endpoints (post-receive hook, build-job context fetch)
+	mux.HandleFunc("POST /internal/hooks/post-receive", s.handlePostReceive)
+	mux.HandleFunc("GET /internal/contexts/{app}/{file}", s.handleContext)
 
 	return logRequests(mux)
 }
