@@ -38,6 +38,9 @@ func NewRootCommand() *cobra.Command {
 		newAppsCommand(),
 		newStatusCommand(),
 		newReleasesCommand(),
+		newLogsCommand(),
+		newScaleCommand(),
+		newRollbackCommand(),
 		newDeployImageCommand(),
 	)
 	return root

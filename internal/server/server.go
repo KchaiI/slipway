@@ -62,6 +62,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("DELETE /v1/apps/{app}", s.handleDestroyApp)
 	mux.HandleFunc("POST /v1/apps/{app}/deployments", s.handleDeployImage)
 	mux.HandleFunc("GET /v1/apps/{app}/releases", s.handleReleases)
+	mux.HandleFunc("POST /v1/apps/{app}/scale", s.handleScale)
+	mux.HandleFunc("POST /v1/apps/{app}/rollback", s.handleRollback)
+	mux.HandleFunc("GET /v1/apps/{app}/logs", s.handleLogs)
 
 	// Git smart HTTP (push only)
 	mux.HandleFunc("GET /git/{repo}/info/refs", s.handleInfoRefs)

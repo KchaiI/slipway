@@ -35,3 +35,6 @@ test-m1: ## M1: control plane + CLI + image deploy
 
 test-m2: ## M2: git push -> build -> deploy pipeline
 	hack/test-m2.sh
+
+test-m3: ## M3: scale / logs -f / rollback
+	hack/test-m3.sh
